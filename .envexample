@@ -1,0 +1,9 @@
+FLASK_APP=app
+FLASK_ENV=development
+SECRET_KEY=your-secret-key
+DATABASE_URL=sqlite:///site.db
+EMAIL_HOST=smtp.sendgrid.net
+EMAIL_PORT=587
+EMAIL_USER=apikey
+EMAIL_PASS=your-sendgrid-api-key
+GOOGLE_FORM_URL=your-google-form-public-url 

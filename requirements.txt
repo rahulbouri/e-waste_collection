@@ -1,0 +1,7 @@
+Flask
+Flask-Mail
+Flask-SQLAlchemy
+Flask-Migrate
+python-dotenv
+itsdangerous
+pytest 

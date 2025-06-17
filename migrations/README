@@ -1,0 +1,7 @@
+This directory contains Alembic migration scripts for managing database schema changes.
+
+- `env.py`: Alembic environment setup (placeholder)
+- `script.py.mako`: Alembic migration script template (placeholder)
+- `versions/`: Individual migration scripts will be placed here
+
+See the main README for instructions on running migrations with Flask-Migrate.

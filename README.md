@@ -1,443 +1,422 @@
-# Social Venture Web Application
+# Venture - Email OTP Login Web Application
 
-## Project Overview
+## 🚀 Project Overview
 
-This is a Python-based web application skeleton that provides:
+Venture is a modern web application built with Flask that provides a secure email-based OTP (One-Time Password) authentication system. The application features user management, address tracking, and order scheduling capabilities, all containerized with Docker for easy deployment and development.
 
-- A static homepage with in-page navigation (anchor links).
-- A login page that authenticates users via OTP sent to their email.
-- New-user onboarding through a Google Form to collect additional details.
-- Post-form submission API calls to integrate with downstream services.
-- Deployment instructions for hosting the final site.
+## ✨ Key Features
 
-## Features
-- Email OTP login with session-based OTPs (5 min TTL)
-- User, Address, and Order management
-- Address and Pickup forms
-- Dockerized with Redis for OTP/session management
+- **🔐 Secure Email OTP Authentication** - 5-minute TTL session-based OTP system
+- **👤 User Management** - Complete user lifecycle with name and email tracking
+- **🏠 Address Management** - Multi-version address tracking with history
+- **📦 Order Scheduling** - Pickup scheduling with image uploads
+- **🐳 Docker Containerized** - Complete containerized environment with Redis
+- **📊 Dashboard Interface** - User-friendly dashboard with order history
+- **🔄 Database Migrations** - Alembic-based database schema management
 
-## Database Access & Querying
+## 🏗️ Architecture Overview
 
-The application uses SQLite as its database, stored at `instance/venture.db` inside the Docker container.
+### Backend Infrastructure
 
-### Accessing the Database
-
-1. **Open a shell in the running web container:**
-   ```sh
-   docker-compose exec web /bin/bash
-   ```
-2. **Install SQLite tools if not present:**
-   ```sh
-   apt-get update && apt-get install -y sqlite3
-   ```
-3. **Connect to the database:**
-   ```sh
-   sqlite3 instance/venture.db
-   ```
-4. **List tables:**
-   ```sql
-   .tables
-   ```
-5. **Query data:**
-   ```sql
-   SELECT * FROM user;
-   SELECT * FROM address;
-   SELECT * FROM "order";
-   ```
-6. **Exit SQLite:**
-   ```sql
-   .exit
-   ```
-
-## User Flow
-
-- **New User:**
-  1. Logs in with email OTP.
-  2. Redirected to address form. On submit, address is saved and user is sent to dashboard.
-- **Existing User:**
-  1. Logs in with email OTP.
-  2. Redirected to dashboard showing:
-     - Name, Email, Google Maps, Postal Code, City, State
-     - Past orders (Order ID, Date)
-     - Buttons: Update/Modify Address, Schedule Pickup
-- **Schedule Pickup:**
-  - User fills form with contact number (required), details (optional), and uploads JPEG images (<5MB each, optional). Images are stored as base64 strings.
-
-## Forcing Docker Rebuild
-
-To ensure all changes are reflected:
-
-```sh
-docker-compose down
-rm -f instance/venture.db
-rm -f migrations/versions/*.py
-# Recreate migration as needed, then:
-docker-compose up -d --build
-docker-compose exec web alembic upgrade head
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Flask Web     │    │   Redis Cache   │    │   SQLite DB     │
+│   Application   │◄──►│   (OTP/Session) │    │   (User Data)   │
+│   (Port 8000)   │    │   (Port 6379)   │    │   (/app/site.db)│
+└─────────────────┘    └─────────────────┘    └─────────────────┘
 ```
 
----
-For any issues, check logs with:
-```sh
-docker-compose logs web
+### Technology Stack
+
+- **Backend Framework**: Flask (Python 3.10)
+- **Database**: SQLite with SQLAlchemy ORM
+- **Cache/Session**: Redis
+- **Email Service**: SMTP (Gmail/SendGrid compatible)
+- **Containerization**: Docker & Docker Compose
+- **Database Migrations**: Alembic
+- **Web Server**: Gunicorn
+- **Frontend**: HTML5, CSS3, JavaScript
+
+## 📁 Project Structure
+
 ```
-
----
-
-## Table of Contents
-
-1. [Prerequisites](#prerequisites)
-2. [Project Structure](#project-structure)
-3. [Setup and Installation](#setup-and-installation)
-4. [Docker Setup](#docker-setup)
-5. [Frontend Development](#frontend-development)
-6. [Backend Development](#backend-development)
-7. [Testing](#testing)
-8. [Deployment](#deployment)
-9. [References & Links](#references--links)
-
----
-
-## Prerequisites
-
-- Python 3.10+ installed on your system
-- pip (Python package manager)
-- conda (for environment management)
-- Docker and Docker Compose (for containerized setup)
-- A service for sending emails (e.g., SendGrid, Gmail SMTP)
-- Google account to create Forms
-- A hosting provider (e.g., Heroku, AWS, PythonAnywhere)
-
----
-
-## Project Structure
-
-```bash
-project-root/
-├── app/                     # Python application package
-│   ├── templates/           # HTML templates
-│   │   ├── index.html       # Homepage
-│   │   ├── login.html       # Login page
-│   │   └── dashboard.html   # Dashboard page
+venture/
+├── app/                          # Main Flask application
+│   ├── __init__.py              # Flask app factory & configuration
+│   ├── models.py                # SQLAlchemy database models
+│   ├── routes.py                # Flask routes & business logic
+│   ├── templates/               # HTML templates
+│   │   ├── index.html           # Landing page
+│   │   ├── login.html           # OTP login page
+│   │   ├── dashboard.html       # User dashboard
+│   │   ├── address_form.html    # New user address form
+│   │   ├── update_address.html  # Address update form
+│   │   └── schedule_pickup.html # Pickup scheduling form
 │   ├── static/
 │   │   └── css/
-│   │       └── styles.css   # CSS for entire site
-│   ├── __init__.py          # Flask app factory
-│   ├── routes.py            # URL routes and logic
-│   ├── models.py            # Database models
-│   └── utils/               # Helper modules
-│       ├── config.py        # Configuration settings
-│       ├── otp.py           # OTP generation & verification
-│       └── emailer.py       # Email-sending functions
-├── migrations/              # Database migrations
-├── .env                     # Environment variables (gitignored)
-├── .dockerignore           # Docker ignore file
-├── Dockerfile              # Docker image definition
-├── docker-compose.yml      # Docker services orchestration
-├── requirements.txt        # Python dependencies
-├── README.md               # This documentation
-├── SETUP.md                # Detailed setup guide
-└── Procfile                # (For Heroku deployment)
+│   │       └── styles.css       # Application styles
+│   └── utils/                   # Utility modules
+│       ├── config.py            # Configuration management
+│       ├── emailer.py           # Email sending functionality
+│       └── otp.py               # OTP generation & verification
+├── migrations/                  # Database migrations
+│   ├── env.py                   # Alembic environment
+│   ├── script.py.mako           # Migration template
+│   └── versions/                # Migration files
+├── docker-compose.yml           # Docker services orchestration
+├── Dockerfile                   # Web application container
+├── requirements.txt             # Python dependencies
+├── startup.sh                   # Container startup script
+├── alembic.ini                  # Alembic configuration
+└── README.md                    # This documentation
 ```
 
----
+## 🗄️ Database Schema
 
-## Setup and Installation
+### User Table
+```sql
+CREATE TABLE user (
+    id INTEGER PRIMARY KEY,
+    email VARCHAR(120) UNIQUE NOT NULL,
+    name VARCHAR(120),
+    last_submitted_form_data JSON,
+    created_at DATETIME NOT NULL,
+    last_login_at DATETIME
+);
+```
 
-### Option 1: Traditional Setup
+### Address Table
+```sql
+CREATE TABLE address (
+    address_id INTEGER PRIMARY KEY,
+    user_email VARCHAR(120) REFERENCES user(email),
+    google_maps VARCHAR(2083),
+    address VARCHAR(500) NOT NULL,
+    postal_code VARCHAR(6),
+    city VARCHAR(20),
+    state VARCHAR(20),
+    last_address INTEGER REFERENCES address(address_id)
+);
+```
 
-1. **Create and activate conda environment**
+### Order Table
+```sql
+CREATE TABLE order (
+    order_id INTEGER PRIMARY KEY,
+    date DATETIME NOT NULL,
+    user_email VARCHAR(120) REFERENCES user(email),
+    address_id INTEGER REFERENCES address(address_id),
+    contact_number VARCHAR(10) NOT NULL,
+    description TEXT,
+    images JSON
+);
+```
 
-   ```bash
-   conda create -n social python=3.10 -y
-   conda activate social
-   ```
+## 🔄 User Flow
 
-2. **Install Dependencies**
+### New User Journey
+1. **Landing Page** → User visits the application
+2. **Login Page** → User enters email address
+3. **OTP Verification** → User receives and enters 6-digit OTP
+4. **Address Form** → New user fills in name and address details
+5. **Dashboard** → User sees their profile and can schedule pickups
 
-   ```bash
-   pip install -r requirements.txt
-   ```
+### Existing User Journey
+1. **Login Page** → User enters email address
+2. **OTP Verification** → User receives and enters 6-digit OTP
+3. **Dashboard** → User sees profile, address, and order history
+4. **Actions Available**:
+   - Update address (creates new version, links to previous)
+   - Schedule new pickup
+   - View order history
 
-3. **Configure Environment Variables**
+## 🚀 Quick Start
 
-   - Copy `.envexample` to `.env`:
-     ```bash
-     cp .envexample .env
-     ```
-   - Set the following variables in `.env`:
-     ```dotenv
-     FLASK_APP=app
-     FLASK_ENV=development
-     SECRET_KEY=<your-secret-key>
-     DATABASE_URL=sqlite:///site.db
-     EMAIL_HOST=smtp.sendgrid.net
-     EMAIL_PORT=587
-     EMAIL_USER=apikey         # for SendGrid
-     EMAIL_PASS=<your-sendgrid-api-key>
-     GOOGLE_FORM_URL=<your-google-form-public-url>
-     ```
+### Prerequisites
+- Docker Desktop
+- Git
 
-4. **Initialize the Database**
+### 1. Clone and Setup
+```bash
+git clone <repository-url>
+cd venture
+```
 
-   ```bash
-   flask db init
-   flask db migrate -m "Initial migration"
-   flask db upgrade
-   ```
+### 2. Configure Environment
+Create a `.env` file in the project root:
+```bash
+# Flask Configuration
+SECRET_KEY=your-secret-key-here
+FLASK_ENV=development
 
-### Option 2: Docker Setup (Recommended)
+# Database Configuration
+DATABASE_URL=sqlite:///site.db
 
-1. **Install Docker and Docker Compose**
+# Email Configuration (Gmail Example)
+MAIL_SERVER=smtp.gmail.com
+MAIL_PORT=587
+MAIL_USE_TLS=True
+MAIL_USE_SSL=False
+MAIL_USERNAME=your-email@gmail.com
+MAIL_PASSWORD=your-app-password
+MAIL_DEFAULT_SENDER=your-email@gmail.com
 
-   - [Docker Desktop](https://www.docker.com/products/docker-desktop) (includes Docker Compose)
-   - Or install separately on Linux:
-     ```bash
-     # Install Docker
-     curl -fsSL https://get.docker.com -o get-docker.sh
-     sudo sh get-docker.sh
-     
-     # Install Docker Compose
-     sudo curl -L "https://github.com/docker/compose/releases/download/v2.20.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-     sudo chmod +x /usr/local/bin/docker-compose
-     ```
+# Redis Configuration
+REDIS_HOST=redis
+REDIS_PORT=6379
+REDIS_PASSWORD=
+REDIS_DB=0
 
-2. **Configure Environment Variables**
+# OTP Configuration
+OTP_TTL_SECONDS=300
+OTP_LENGTH=6
+```
 
-   Create a `.env` file in the project root:
-   ```bash
-   # Flask Configuration
-   SECRET_KEY=your-secret-key-here
-   FLASK_ENV=development
+### 3. Start Application
+```bash
+# Build and start all services
+docker-compose up --build
 
-   # Database Configuration
-   DATABASE_URL=sqlite:///site.db
+# Or run in detached mode
+docker-compose up -d --build
+```
 
-   # Email Configuration (for sending OTP)
-   MAIL_SERVER=smtp.gmail.com
-   MAIL_PORT=587
-   MAIL_USE_TLS=True
-   MAIL_USE_SSL=False
-   MAIL_USERNAME=your-email@gmail.com
-   MAIL_PASSWORD=your-app-password
-   MAIL_DEFAULT_SENDER=your-email@gmail.com
+### 4. Access Application
+- **Web Application**: http://localhost:8000
+- **Health Check**: http://localhost:8000/health
 
-   # Redis Configuration
-   REDIS_HOST=redis
-   REDIS_PORT=6379
-   REDIS_PASSWORD=
-   REDIS_DB=0
-
-   # OTP Configuration
-   OTP_TTL_SECONDS=300
-   OTP_LENGTH=6
-   ```
-
-3. **Build and Start Services**
-
-   ```bash
-   # Build and start all services
-   docker-compose up --build
-
-   # Or run in detached mode
-   docker-compose up -d --build
-   ```
-
-4. **Initialize Database (First time only)**
-
-   ```bash
-   # Run database migrations
-   docker-compose exec web flask db init
-   docker-compose exec web flask db migrate -m "Initial migration"
-   docker-compose exec web flask db upgrade
-   ```
-
-5. **Access the Application**
-
-   - **Web Application**: http://localhost:8000
-   - **Redis Commander** (optional): http://localhost:8081
-   - **Redis CLI**: `docker-compose exec redis redis-cli`
-
----
-
-## Docker Setup
-
-### Services Overview
-
-The Docker setup includes three main services:
-
-1. **Web Application** (`web`)
-   - Flask application with Gunicorn
-   - Runs on port 8000
-   - Connected to Redis and SQLite
-
-2. **Redis** (`redis`)
-   - Session storage for OTP management
-   - Runs on port 6379
-   - Persistent data storage
-
-3. **Redis Commander** (`redis-commander`) - Optional
-   - Web UI for Redis management
-   - Runs on port 8081
-   - Only started with monitoring profile
+## 🔧 Development
 
 ### Docker Commands
-
 ```bash
-# Start all services
-docker-compose up
-
-# Start in background
+# Start services
 docker-compose up -d
-
-# Start with monitoring (includes Redis Commander)
-docker-compose --profile monitoring up
-
-# Stop all services
-docker-compose down
-
-# Stop and remove volumes
-docker-compose down -v
 
 # View logs
 docker-compose logs -f web
 
 # Execute commands in container
-docker-compose exec web flask shell
-docker-compose exec redis redis-cli
+docker-compose exec web bash
 
-# Rebuild after code changes
+# Rebuild after changes
 docker-compose up --build
 
-# Update dependencies
-docker-compose build --no-cache
+# Stop services
+docker-compose down
+
+# Clean up everything
+docker-compose down -v
+docker system prune -a --volumes -f
 ```
 
-### Development Workflow
+### Database Operations
+```bash
+# Access database
+docker-compose exec web sqlite3 /app/site.db
 
-1. **Start the environment:**
-   ```bash
-   docker-compose up -d
-   ```
+# Run migrations
+docker-compose exec web alembic upgrade head
 
-2. **Make code changes** (files are mounted as volumes)
+# Create new migration
+docker-compose exec web alembic revision --autogenerate -m "Description"
 
-3. **Restart the web service:**
-   ```bash
-   docker-compose restart web
-   ```
+# Check migration status
+docker-compose exec web alembic current
+```
 
-4. **View logs:**
-   ```bash
-   docker-compose logs -f web
-   ```
+### Code Structure
+
+#### Models (`app/models.py`)
+- **User**: Core user entity with email, name, and timestamps
+- **Address**: Address management with versioning support
+- **Order**: Pickup order tracking with image support
+
+#### Routes (`app/routes.py`)
+- **Authentication**: OTP generation, verification, and session management
+- **User Management**: Address forms, dashboard, profile updates
+- **Order Management**: Pickup scheduling and order history
+- **API Endpoints**: Form submissions and notifications
+
+#### Utilities
+- **OTP System** (`app/utils/otp.py`): Secure OTP generation and Redis-based verification
+- **Email Service** (`app/utils/emailer.py`): SMTP-based email delivery
+- **Configuration** (`app/utils/config.py`): Environment-based configuration management
+
+## 🔐 Security Features
+
+### OTP Authentication
+- **6-digit numeric OTPs** with 5-minute TTL
+- **Redis-based storage** for session management
+- **Automatic cleanup** of expired OTPs
+- **Rate limiting** and session validation
+
+### Session Management
+- **Secure session cookies** with HTTP-only flags
+- **Session-based user tracking** with Redis fallback
+- **Automatic session cleanup** on logout
+
+### Data Protection
+- **SQL injection prevention** via SQLAlchemy ORM
+- **XSS protection** through template escaping
+- **CSRF protection** via Flask-WTF (configurable)
+
+## 📧 Email Integration
+
+### Supported Providers
+- **Gmail SMTP** (with App Passwords)
+- **SendGrid** (API key)
+- **Custom SMTP servers**
+
+### Email Features
+- **OTP delivery** with HTML formatting
+- **Error handling** and retry logic
+- **Template-based emails** for consistency
+
+## 🐳 Docker Architecture
+
+### Services
+1. **Web Application** (`venture-web`)
+   - Flask application with Gunicorn
+   - Port 8000 (mapped to host)
+   - Volume mounts for development
+
+2. **Redis** (`venture-redis`)
+   - Session and OTP storage
+   - Port 6379 (internal)
+   - Persistent volume storage
+
+### Container Features
+- **Multi-stage builds** for optimized images
+- **Non-root user** for security
+- **Health checks** for service monitoring
+- **Volume persistence** for data storage
+
+## 🧪 Testing
+
+### Manual Testing
+```bash
+# Test OTP flow
+1. Visit http://localhost:8000
+2. Enter email and request OTP
+3. Check email for OTP
+4. Enter OTP and verify login
+
+# Test user flow
+1. Complete address form
+2. Verify dashboard display
+3. Test address update
+4. Test pickup scheduling
+```
+
+### Database Testing
+```bash
+# Check user creation
+docker-compose exec web sqlite3 /app/site.db "SELECT * FROM user;"
+
+# Check address creation
+docker-compose exec web sqlite3 /app/site.db "SELECT * FROM address;"
+
+# Check order creation
+docker-compose exec web sqlite3 /app/site.db "SELECT * FROM \"order\";"
+```
+
+## 🚀 Deployment
 
 ### Production Considerations
+1. **Environment Variables**: Set production values
+2. **SSL/TLS**: Configure HTTPS
+3. **Database**: Consider PostgreSQL for production
+4. **Redis**: Use managed Redis service
+5. **Email**: Configure production SMTP
+6. **Monitoring**: Add health checks and logging
 
-For production deployment:
+### Deployment Options
+- **Docker Swarm**: For container orchestration
+- **Kubernetes**: For large-scale deployments
+- **Cloud Platforms**: AWS, GCP, Azure
+- **PaaS**: Heroku, Railway, Render
 
-1. **Update environment variables:**
-   ```bash
-   FLASK_ENV=production
-   SECRET_KEY=<strong-secret-key>
-   ```
+## 🔍 Troubleshooting
 
-2. **Use external Redis:**
-   ```bash
-   REDIS_HOST=<your-redis-host>
-   REDIS_PASSWORD=<your-redis-password>
-   ```
+### Common Issues
 
-3. **Configure email service:**
-   ```bash
-   MAIL_SERVER=<your-smtp-server>
-   MAIL_USERNAME=<your-email>
-   MAIL_PASSWORD=<your-password>
-   ```
+#### OTP Not Received
+```bash
+# Check email configuration
+docker-compose logs web | grep -i email
 
----
+# Verify SMTP settings in .env
+# Check spam folder
+```
 
-## Frontend Development
+#### Database Issues
+```bash
+# Reset database
+docker-compose down -v
+docker-compose up -d --build
 
-- **Homepage with Anchor Links**: See `app/templates/index.html` for a sample navigation bar and sections. Use `<nav>` and anchor tags to jump within the page.
-- **Login Page UI**: See `app/templates/login.html` for a simple email input and "Send OTP" button.
-- **Dashboard Page**: See `app/templates/dashboard.html` for the post-login interface.
-- **CSS**: All styles in `app/static/css/styles.css`.
+# Check migration status
+docker-compose exec web alembic current
+```
 
----
+#### Container Issues
+```bash
+# Rebuild containers
+docker-compose build --no-cache
 
-## Backend Development
+# Clean Docker system
+docker system prune -a --volumes -f
+```
 
-- **Flask** is used as the web framework.
-- **Database**: SQLAlchemy models in `app/models.py`.
-- **OTP Workflow**: OTP generation in `app/utils/otp.py`, email sending in `app/utils/emailer.py`.
-- **Session Management**: Redis-based session storage with fallback to in-memory.
-- **Google Form Integration**: Redirect new users to a Google Form. Webhook endpoint at `/api/form-submit`.
-- **API Stubs**: Placeholder endpoints in `app/routes.py` for future integrations.
+### Logs and Debugging
+```bash
+# View application logs
+docker-compose logs -f web
 
----
+# View Redis logs
+docker-compose logs -f redis
 
-## Testing
+# Access container shell
+docker-compose exec web bash
+```
 
-- Use `pytest` for unit tests.
-- Test OTP, email sending (mock), Google Form webhook, and anchor navigation.
-- Run tests in Docker:
-  ```bash
-  docker-compose exec web python test_otp.py
-  ```
+## 📚 API Reference
 
----
+### Authentication Endpoints
+- `POST /login` - Request OTP
+- `POST /verify-otp` - Verify OTP and login
+- `GET /logout` - Logout user
 
-## Deployment
+### User Management
+- `GET /dashboard` - User dashboard
+- `GET /address-form` - New user address form
+- `POST /address-form` - Submit address
+- `GET /update-address` - Address update form
+- `POST /update-address` - Submit address update
 
-### Docker Deployment
+### Order Management
+- `GET /schedule-pickup` - Pickup scheduling form
+- `POST /schedule-pickup` - Submit pickup request
 
-1. **Build production image:**
-   ```bash
-   docker build -t your-app-name .
-   ```
+## 🤝 Contributing
 
-2. **Run with production environment:**
-   ```bash
-   docker run -d \
-     -p 8000:8000 \
-     -e FLASK_ENV=production \
-     -e SECRET_KEY=<your-secret-key> \
-     your-app-name
-   ```
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
 
-### Traditional Deployment
+## 📄 License
 
-1. **Choose Hosting Provider** (Heroku, PythonAnywhere, etc.)
-2. **Procfile** for Heroku:
-   ```Procfile
-   web: gunicorn app:app
-   ```
-3. **Set Config Vars** on hosting dashboard using same ENV keys as `.env`.
-4. **Push to Remote**
-   ```bash
-   git add .
-   git commit -m "Prepare for deployment"
-   git push heroku main
-   ```
-5. **Run Migrations in Production**
-   ```bash
-   heroku run flask db upgrade
-   ```
-6. **Configure Domain & HTTPS**
+This project is licensed under the MIT License - see the LICENSE file for details.
 
----
+## 🆘 Support
 
-## References & Links
-
-- [Flask Official Documentation](https://flask.palletsprojects.com/)
-- [Docker Documentation](https://docs.docker.com/)
-- [Docker Compose Documentation](https://docs.docker.com/compose/)
-- [SendGrid Email API](https://docs.sendgrid.com/)
-- [Google Forms Apps Script Webhooks](https://developers.google.com/apps-script)
-- [HTML Anchor Links](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/a)
-- [Redis Documentation](https://redis.io/documentation)
+For support and questions:
+- Create an issue in the repository
+- Check the troubleshooting section
+- Review the logs for error details
 
 ---
 
-*This README provides a high-level overview and step-by-step instructions for setting up, developing, and deploying your web application. Update the placeholders and sections as you build out your project.* 
+**Built with ❤️ using Flask, Docker, and Redis** 

@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard</title>
+  <link rel="stylesheet" href="/static/css/styles.css" />
+  <style>
+    .container {
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid #eee;
+    }
+    
+    .welcome {
+      font-size: 24px;
+      color: #333;
+    }
+    
+    .logout-btn {
+      padding: 8px 16px;
+      background-color: #dc3545;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      text-decoration: none;
+      font-size: 14px;
+    }
+    
+    .logout-btn:hover {
+      background-color: #c82333;
+    }
+    
+    .user-info {
+      background-color: #f8f9fa;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 30px;
+    }
+    
+    .user-info h3 {
+      margin-top: 0;
+      color: #495057;
+    }
+    
+    .info-item {
+      margin-bottom: 10px;
+    }
+    
+    .info-label {
+      font-weight: bold;
+      color: #6c757d;
+    }
+    
+    .success-message {
+      background-color: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+      padding: 15px;
+      border-radius: 4px;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1 class="welcome">Welcome to Dashboard</h1>
+      <a href="/logout" class="logout-btn">Logout</a>
+    </div>
+    
+    <div class="success-message">
+      ✅ Successfully logged in with OTP verification!
+    </div>
+    
+    <div class="user-info">
+      <h3>User Information</h3>
+      <div class="info-item">
+        <span class="info-label">Email:</span> {{ user.email }}
+      </div>
+      <div class="info-item">
+        <span class="info-label">User ID:</span> {{ user.id }}
+      </div>
+      <div class="info-item">
+        <span class="info-label">Member Since:</span> {{ user.created_at.strftime('%B %d, %Y') if user.created_at else 'N/A' }}
+      </div>
+    </div>
+    
+    <div class="content">
+      <h3>What's Next?</h3>
+      <p>You have successfully completed the OTP verification process. Your session is now active and secure.</p>
+      
+      <h4>Features Available:</h4>
+      <ul>
+        <li>✅ Secure OTP-based authentication</li>
+        <li>✅ Session management</li>
+        <li>✅ User data persistence</li>
+        <li>✅ Audit trail for OTP usage</li>
+      </ul>
+      
+      <h4>Security Features:</h4>
+      <ul>
+        <li>🔒 6-digit secure OTP codes</li>
+        <li>⏰ 5-minute expiration time</li>
+        <li>🔄 Unique session management</li>
+        <li>📧 Email-based verification</li>
+        <li>🧹 Automatic cleanup of expired OTPs</li>
+      </ul>
+    </div>
+  </div>
+</body>
+</html> 

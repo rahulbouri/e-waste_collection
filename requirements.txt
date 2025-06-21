@@ -4,4 +4,9 @@ Flask-SQLAlchemy
 Flask-Migrate
 python-dotenv
 itsdangerous
-pytest 
+pytest
+redis
+email-validator
+gunicorn
+requests
+beautifulsoup4 

@@ -1,0 +1,85 @@
+version: '3.8'
+
+services:
+  # Flask Application
+  web:
+    build: .
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    environment:
+      - FLASK_APP=app
+      - FLASK_ENV=development
+      - SECRET_KEY=your-secret-key-change-in-production
+      - DATABASE_URL=sqlite:///site.db
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=
+      - REDIS_DB=0
+      - MAIL_SERVER=smtp.gmail.com
+      - MAIL_PORT=465
+      - MAIL_USE_TLS=False
+      - MAIL_USE_SSL=True
+      - MAIL_USERNAME=${MAIL_USERNAME}
+      - MAIL_PASSWORD=${MAIL_PASSWORD}
+      - OTP_TTL_SECONDS=300
+      - OTP_LENGTH=6
+    volumes:
+      - ./app:/app/app
+      - ./migrations:/app/migrations
+      - sqlite_data:/app/instance
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Redis for OTP session storage
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    restart: unless-stopped
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Optional: Redis Commander for Redis management (web UI)
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    ports:
+      - "8081:8081"
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+    depends_on:
+      - redis
+    restart: unless-stopped
+    networks:
+      - app-network
+    profiles:
+      - monitoring
+
+volumes:
+  sqlite_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  app-network:
+    driver: bridge 

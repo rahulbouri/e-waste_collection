@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="/static/css/styles.css" />
   <style>
     .container {
-      max-width: 800px;
+      max-width: 1000px;
       margin: 50px auto;
       padding: 20px;
       background: white;
@@ -53,6 +53,14 @@
     .user-info h3 {
       margin-top: 0;
       color: #495057;
+      border-bottom: 2px solid #007bff;
+      padding-bottom: 10px;
+    }
+    
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 15px;
     }
     
     .info-item {
@@ -62,62 +70,243 @@
     .info-label {
       font-weight: bold;
       color: #6c757d;
+      display: block;
+      margin-bottom: 5px;
     }
     
-    .success-message {
-      background-color: #d4edda;
-      color: #155724;
-      border: 1px solid #c3e6cb;
+    .info-value {
+      color: #333;
+      font-size: 16px;
+    }
+    
+    .address-section {
+      background-color: #e7f3ff;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 30px;
+      border-left: 4px solid #007bff;
+    }
+    
+    .address-section h3 {
+      margin-top: 0;
+      color: #007bff;
+      border-bottom: 2px solid #007bff;
+      padding-bottom: 10px;
+    }
+    
+    .orders-section {
+      background-color: #fff3cd;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 30px;
+      border-left: 4px solid #ffc107;
+    }
+    
+    .orders-section h3 {
+      margin-top: 0;
+      color: #856404;
+      border-bottom: 2px solid #ffc107;
+      padding-bottom: 10px;
+    }
+    
+    .order-item {
+      background-color: white;
+      padding: 15px;
+      border-radius: 6px;
+      margin-bottom: 10px;
+      border: 1px solid #dee2e6;
+    }
+    
+    .order-item:last-child {
+      margin-bottom: 0;
+    }
+    
+    .order-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    
+    .order-id {
+      font-weight: bold;
+      color: #007bff;
+    }
+    
+    .order-date {
+      color: #6c757d;
+      font-size: 14px;
+    }
+    
+    .no-orders {
+      text-align: center;
+      color: #6c757d;
+      font-style: italic;
+      padding: 20px;
+    }
+    
+    .action-buttons {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      margin-top: 30px;
+    }
+    
+    .btn {
+      padding: 15px 30px;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      text-align: center;
+      font-weight: bold;
+      transition: all 0.3s ease;
+    }
+    
+    .btn-primary {
+      background-color: #007bff;
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      background-color: #0056b3;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    
+    .btn-success {
+      background-color: #28a745;
+      color: white;
+    }
+    
+    .btn-success:hover {
+      background-color: #218838;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    
+    .flash-message {
       padding: 15px;
       border-radius: 4px;
       margin-bottom: 20px;
+    }
+    
+    .flash-error {
+      background-color: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    
+    .flash-success {
+      background-color: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
     }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="header">
-      <h1 class="welcome">Welcome to Dashboard</h1>
+      <h1 class="welcome">Welcome, {{ user.name or 'User' }}!</h1>
       <a href="/logout" class="logout-btn">Logout</a>
     </div>
     
-    <div class="success-message">
-      ✅ Successfully logged in with OTP verification!
-    </div>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="flash-message flash-{{ category }}">
+            {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
     
     <div class="user-info">
       <h3>User Information</h3>
-      <div class="info-item">
-        <span class="info-label">Email:</span> {{ user.email }}
-      </div>
-      <div class="info-item">
-        <span class="info-label">User ID:</span> {{ user.id }}
-      </div>
-      <div class="info-item">
-        <span class="info-label">Member Since:</span> {{ user.created_at.strftime('%B %d, %Y') if user.created_at else 'N/A' }}
+      <div class="info-grid">
+        <div class="info-item">
+          <span class="info-label">Name:</span>
+          <span class="info-value">{{ user.name or 'Not provided' }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Email ID:</span>
+          <span class="info-value">{{ user.email }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Member Since:</span>
+          <span class="info-value">{{ user.created_at.strftime('%B %d, %Y') if user.created_at else 'N/A' }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Last Login:</span>
+          <span class="info-value">{{ user.last_login_at.strftime('%B %d, %Y at %I:%M %p') if user.last_login_at else 'N/A' }}</span>
+        </div>
       </div>
     </div>
     
-    <div class="content">
-      <h3>What's Next?</h3>
-      <p>You have successfully completed the OTP verification process. Your session is now active and secure.</p>
-      
-      <h4>Features Available:</h4>
-      <ul>
-        <li>✅ Secure OTP-based authentication</li>
-        <li>✅ Session management</li>
-        <li>✅ User data persistence</li>
-        <li>✅ Audit trail for OTP usage</li>
-      </ul>
-      
-      <h4>Security Features:</h4>
-      <ul>
-        <li>🔒 6-digit secure OTP codes</li>
-        <li>⏰ 5-minute expiration time</li>
-        <li>🔄 Unique session management</li>
-        <li>📧 Email-based verification</li>
-        <li>🧹 Automatic cleanup of expired OTPs</li>
-      </ul>
+    {% if address %}
+    <div class="address-section">
+      <h3>Address Information</h3>
+      <div class="info-grid">
+        <div class="info-item">
+          <span class="info-label">Address:</span>
+          <span class="info-value">{{ address.address }}</span>
+        </div>
+        {% if address.google_maps %}
+        <div class="info-item">
+          <span class="info-label">Google Maps:</span>
+          <span class="info-value">
+            <a href="{{ address.google_maps }}" target="_blank" style="color: #007bff;">View on Maps</a>
+          </span>
+        </div>
+        {% endif %}
+        <div class="info-item">
+          <span class="info-label">Postal Code:</span>
+          <span class="info-value">{{ address.postal_code or 'Not provided' }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">City:</span>
+          <span class="info-value">{{ address.city or 'Not provided' }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">State:</span>
+          <span class="info-value">{{ address.state or 'Not provided' }}</span>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+    
+    <div class="orders-section">
+      <h3>Past Orders</h3>
+      {% if orders %}
+        {% for order in orders %}
+        <div class="order-item">
+          <div class="order-header">
+            <span class="order-id">Order ID: {{ order.order_id }}</span>
+            <span class="order-date">{{ order.date.strftime('%B %d, %Y at %I:%M %p') }}</span>
+          </div>
+          <div class="order-details">
+            <p><strong>Contact:</strong> {{ order.contact_number }}</p>
+            {% if order.description %}
+            <p><strong>Description:</strong> {{ order.description }}</p>
+            {% endif %}
+            {% if order.images %}
+            <p><strong>Images:</strong> {{ order.images|length }} file(s) uploaded</p>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="no-orders">
+          <p>No orders found. Schedule your first pickup!</p>
+        </div>
+      {% endif %}
+    </div>
+    
+    <div class="action-buttons">
+      <a href="{{ url_for('main.update_address') }}" class="btn btn-primary">Update/Modify Address</a>
+      <a href="{{ url_for('main.schedule_pickup') }}" class="btn btn-success">Schedule Pickup</a>
     </div>
   </div>
 </body>

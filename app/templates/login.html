@@ -107,21 +107,21 @@
   <div class="container">
     <h2 style="text-align: center; margin-bottom: 30px;">Login</h2>
 
-    <!-- Message section -->
-    {% if message %}
+  <!-- Message section -->
+  {% if message %}
       <div class="message {% if error %}error{% else %}success{% endif %}">
         {{ message }}
       </div>
-    {% endif %}
+  {% endif %}
 
     <!-- Email Form -->
     <form method="post" action="/login" id="emailForm">
       <div class="form-group">
-        <label for="email">Email:</label>
+    <label for="email">Email:</label>
         <input type="email" id="email" name="email" required value="{{ email or '' }}" />
       </div>
-      <button type="submit">Send OTP</button>
-    </form>
+    <button type="submit">Send OTP</button>
+  </form>
 
     <!-- OTP Form -->
     <form method="post" action="/verify-otp" id="otpForm" class="otp-form {% if show_otp_form %}show{% endif %}">

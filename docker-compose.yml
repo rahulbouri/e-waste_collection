@@ -7,7 +7,7 @@ services:
     env_file:
       - .env
     ports:
-      - "8000:8000"
+      - "8000:5000"
     environment:
       - FLASK_APP=app
       - FLASK_ENV=development
@@ -21,14 +21,13 @@ services:
       - MAIL_PORT=465
       - MAIL_USE_TLS=False
       - MAIL_USE_SSL=True
-      - MAIL_USERNAME=${MAIL_USERNAME}
-      - MAIL_PASSWORD=${MAIL_PASSWORD}
+      - MAIL_USERNAME=rahulbouri16@gmail.com
+      - MAIL_PASSWORD=mqgarxvgguddqvli
       - OTP_TTL_SECONDS=300
       - OTP_LENGTH=6
     volumes:
       - ./app:/app/app
       - ./migrations:/app/migrations
-      - sqlite_data:/app/instance
     depends_on:
       redis:
         condition: service_healthy
@@ -36,7 +35,7 @@ services:
     networks:
       - app-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      test: ["CMD", "curl", "-f", "http://localhost:5000/"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -75,8 +74,6 @@ services:
       - monitoring
 
 volumes:
-  sqlite_data:
-    driver: local
   redis_data:
     driver: local
 

@@ -10,6 +10,78 @@ This is a Python-based web application skeleton that provides:
 - Post-form submission API calls to integrate with downstream services.
 - Deployment instructions for hosting the final site.
 
+## Features
+- Email OTP login with session-based OTPs (5 min TTL)
+- User, Address, and Order management
+- Address and Pickup forms
+- Dockerized with Redis for OTP/session management
+
+## Database Access & Querying
+
+The application uses SQLite as its database, stored at `instance/venture.db` inside the Docker container.
+
+### Accessing the Database
+
+1. **Open a shell in the running web container:**
+   ```sh
+   docker-compose exec web /bin/bash
+   ```
+2. **Install SQLite tools if not present:**
+   ```sh
+   apt-get update && apt-get install -y sqlite3
+   ```
+3. **Connect to the database:**
+   ```sh
+   sqlite3 instance/venture.db
+   ```
+4. **List tables:**
+   ```sql
+   .tables
+   ```
+5. **Query data:**
+   ```sql
+   SELECT * FROM user;
+   SELECT * FROM address;
+   SELECT * FROM "order";
+   ```
+6. **Exit SQLite:**
+   ```sql
+   .exit
+   ```
+
+## User Flow
+
+- **New User:**
+  1. Logs in with email OTP.
+  2. Redirected to address form. On submit, address is saved and user is sent to dashboard.
+- **Existing User:**
+  1. Logs in with email OTP.
+  2. Redirected to dashboard showing:
+     - Name, Email, Google Maps, Postal Code, City, State
+     - Past orders (Order ID, Date)
+     - Buttons: Update/Modify Address, Schedule Pickup
+- **Schedule Pickup:**
+  - User fills form with contact number (required), details (optional), and uploads JPEG images (<5MB each, optional). Images are stored as base64 strings.
+
+## Forcing Docker Rebuild
+
+To ensure all changes are reflected:
+
+```sh
+docker-compose down
+rm -f instance/venture.db
+rm -f migrations/versions/*.py
+# Recreate migration as needed, then:
+docker-compose up -d --build
+docker-compose exec web alembic upgrade head
+```
+
+---
+For any issues, check logs with:
+```sh
+docker-compose logs web
+```
+
 ---
 
 ## Table of Contents

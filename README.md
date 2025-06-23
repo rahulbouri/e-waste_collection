@@ -137,7 +137,7 @@ CREATE TABLE order (
 - Git
 
 ### 1. Clone and Setup
-```bash
+   ```bash
 git clone <repository-url>
 cd venture
 ```
@@ -173,7 +173,7 @@ OTP_LENGTH=6
 ```
 
 ### 3. Start Application
-```bash
+   ```bash
 # Build and start all services
 docker-compose up --build
 
@@ -188,7 +188,7 @@ docker-compose up -d --build
 ## 🔧 Development
 
 ### Docker Commands
-```bash
+     ```bash
 # Start services
 docker-compose up -d
 
@@ -294,7 +294,7 @@ docker-compose exec web alembic current
 ## 🧪 Testing
 
 ### Manual Testing
-```bash
+   ```bash
 # Test OTP flow
 1. Visit http://localhost:8000
 2. Enter email and request OTP
@@ -360,7 +360,7 @@ docker-compose exec web alembic current
 ```
 
 #### Container Issues
-```bash
+   ```bash
 # Rebuild containers
 docker-compose build --no-cache
 
@@ -369,7 +369,7 @@ docker system prune -a --volumes -f
 ```
 
 ### Logs and Debugging
-```bash
+   ```bash
 # View application logs
 docker-compose logs -f web
 

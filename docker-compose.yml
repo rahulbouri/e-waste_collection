@@ -1,24 +1,52 @@
 version: '3.8'
 
 services:
-  # Flask Application
-  web:
+  # Flask Backend
+  backend:
     build: .
-    env_file:
-      - .env
+    container_name: e-waste-backend
     ports:
-      - "8000:5000"
+      - "5000:5000"
+    environment:
+      - FLASK_APP=app
+      - FLASK_ENV=production
+      - DATABASE_URL=sqlite:///e-waste.db
+      - REDIS_URL=redis://redis:6379
+      - EMAIL_SERVER=smtp.sendgrid.net
+      - EMAIL_PORT=587
+      - EMAIL_USE_TLS=true
+      - EMAIL_USER=apikey
+      - EMAIL_PASS=${EMAIL_PASS}
+      - TWILIO_ACCOUNT_SID=${TWILIO_ACCOUNT_SID}
+      - TWILIO_AUTH_TOKEN=${TWILIO_AUTH_TOKEN}
+      - TWILIO_WHATSAPP_FROM=${TWILIO_WHATSAPP_FROM}
+      - WHATSAPP_ADMIN_NUMBER=${WHATSAPP_ADMIN_NUMBER}
     volumes:
       - ./app:/app/app
       - ./migrations:/app/migrations
+      - ./alembic.ini:/app/alembic.ini
+      - e-waste-data:/app/data
     depends_on:
-      redis:
-        condition: service_healthy
+      - redis
     restart: unless-stopped
-    networks:
-      - app-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # React Frontend
+  frontend:
+    build: ./frontend
+    container_name: e-waste-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -27,39 +55,23 @@ services:
   # Redis for OTP session storage
   redis:
     image: redis:7-alpine
+    container_name: e-waste-redis
     ports:
       - "6379:6379"
     volumes:
-      - redis_data:/data
-    command: redis-server --appendonly yes
+      - redis-data:/data
     restart: unless-stopped
-    networks:
-      - app-network
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 30s
       timeout: 10s
       retries: 3
-
-  # Optional: Redis Commander for Redis management (web UI)
-  redis-commander:
-    image: rediscommander/redis-commander:latest
-    ports:
-      - "8081:8081"
-    environment:
-      - REDIS_HOSTS=local:redis:6379
-    depends_on:
-      - redis
-    restart: unless-stopped
-    networks:
-      - app-network
-    profiles:
-      - monitoring
+      start_period: 10s
 
 volumes:
-  redis_data:
-    driver: local
+  e-waste-data:
+  redis-data:
 
 networks:
-  app-network:
-    driver: bridge 
+  default:
+    name: e-waste-network 

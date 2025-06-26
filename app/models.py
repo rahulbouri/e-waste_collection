@@ -57,7 +57,37 @@ class Order(db.Model):
     contact_number = db.Column(db.String(10), nullable=False)
     description  = db.Column(db.Text)     # optional, Text for longer descriptions
     images       = db.Column(db.JSON)     # store list of image URLs/paths
+    waste_type   = db.Column(db.String(20), nullable=False, default='e-waste')  # 'e-waste' or 'biowaste'
 
     # relationships
     user    = db.relationship('User',    back_populates='orders')
     address = db.relationship('Address', back_populates='orders')
+
+
+class BioWasteOrder(db.Model):
+    __tablename__ = 'biowaste_order'
+
+    order_id     = db.Column(db.Integer, primary_key=True, unique=True)
+    date         = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    user_email   = db.Column(
+        db.String(120),
+        db.ForeignKey('user.email', ondelete='SET NULL'),
+        nullable=False,
+        index=True
+    )
+    address_id   = db.Column(
+        db.Integer,
+        db.ForeignKey('address.address_id', ondelete='SET NULL'),
+        nullable=False
+    )
+    contact_number = db.Column(db.String(10), nullable=False)
+    description  = db.Column(db.Text)
+    images       = db.Column(db.JSON)
+    bio_waste_category = db.Column(db.String(50), nullable=False)
+    quantity     = db.Column(db.Float, nullable=False)
+    unit         = db.Column(db.String(20), nullable=False)
+    special_instructions = db.Column(db.Text)
+
+    # relationships
+    user    = db.relationship('User')
+    address = db.relationship('Address')

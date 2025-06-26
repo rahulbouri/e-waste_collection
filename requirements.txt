@@ -10,3 +10,5 @@ email-validator
 gunicorn
 requests
 beautifulsoup4 
+Twilio
+Flask-CORS 

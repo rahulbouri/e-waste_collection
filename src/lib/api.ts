@@ -1,6 +1,26 @@
 // API client for Waste Collection Service Backend
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+// Smart API URL detection
+function getApiBaseUrl(): string {
+  // If VITE_API_URL is explicitly set, use it
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
+  }
+  
+  // Auto-detect based on current environment
+  const currentOrigin = window.location.origin;
+  
+  // If we're on localhost (development)
+  if (currentOrigin.includes('localhost') || currentOrigin.includes('127.0.0.1')) {
+    return 'http://localhost:8000/api';
+  }
+  
+  // If we're on Render or any other production domain
+  // Use the same origin as the frontend (same domain)
+  return `${currentOrigin}/api`;
+}
+
+const API_BASE_URL = getApiBaseUrl();
 
 interface ApiResponse<T = any> {
   data?: T;

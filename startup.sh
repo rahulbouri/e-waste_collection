@@ -6,17 +6,15 @@ HOST=${HOST:-0.0.0.0}
 
 echo "🚀 Starting Eco Collect application on $HOST:$PORT"
 
-# Start nginx in background (only if not on Render)
-if [ "$RENDER" != "true" ]; then
-    echo "📦 Starting nginx for local development..."
-    nginx &
-    sleep 2
-fi
+# Start nginx in background (always start nginx for production)
+echo "📦 Starting nginx..."
+nginx &
+sleep 2
 
 # Run database migrations
 echo "🔄 Running database migrations..."
-python -m flask db upgrade || true
+cd /app && python -m flask db upgrade 2>/dev/null || echo "⚠️  Migration failed, continuing anyway..."
 
 # Start the Flask application
 echo "🚀 Starting Flask application on $HOST:$PORT"
-exec gunicorn --bind $HOST:$PORT --workers 2 --timeout 120 "app:create_app()" 
+cd /app && exec gunicorn --bind $HOST:$PORT --workers 2 --timeout 120 "app:create_app()" 

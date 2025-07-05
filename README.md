@@ -284,7 +284,7 @@ curl -X POST http://localhost:8000/api/auth/send-otp \
 ### Common Issues
 
 #### CORS Errors
-- Check `VITE_API_URL` configuration
+- API URL is now auto-detected
 - Verify backend CORS settings
 - Ensure proper domain configuration
 

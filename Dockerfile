@@ -52,6 +52,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy backend code
 COPY backend/ .
 
+# Ensure alembic.ini is in the correct location for migrations
+RUN cp /app/alembic.ini /app/migrations/alembic.ini 2>/dev/null || true
+
 # Copy startup script
 COPY startup.sh /app/startup.sh
 RUN chmod +x /app/startup.sh
@@ -71,7 +74,7 @@ EXPOSE ${PORT:-5000}
 
 # Health check (Render will use the PORT environment variable)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:$PORT/health || exit 1
+    CMD curl -f http://localhost:$PORT/api/health || exit 1
 
 # Run the startup script
 CMD ["/app/startup.sh"] 

@@ -15,9 +15,16 @@ COPY . .
 # Build the frontend application
 RUN npm run build
 
-# Backend build stage
-FROM python:3.11-slim AS backend-builder
+# Production stage
+FROM python:3.11-slim
 
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV FLASK_APP=app
+ENV FLASK_ENV=production
+
+# Set work directory
 WORKDIR /app
 
 # Install system dependencies
@@ -27,57 +34,44 @@ RUN apt-get update \
         g++ \
         libpq-dev \
         curl \
-        postgresql-client \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
-
-# Create venv and install backend requirements (including gunicorn)
-RUN python3 -m venv /venv
-ENV PATH="/venv/bin:$PATH"
-COPY backend/requirements.txt .
-RUN pip install --upgrade pip && pip install -r requirements.txt && pip install gunicorn supervisor
-
-# Copy backend code
-COPY backend/ .
-
-# Production stage
-FROM python:3.11-slim
-
-# Install system dependencies
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
         nginx \
-        gcc \
-        g++ \
-        libpq-dev \
-        curl \
         postgresql-client \
-        supervisor \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy built frontend from frontend-builder
 COPY --from=frontend-builder /app/dist /usr/share/nginx/html
 
-# Copy backend code and venv from backend-builder
-COPY --from=backend-builder /app /app/backend
-COPY --from=backend-builder /venv /venv
-
 # Copy nginx configuration
 COPY nginx.conf /etc/nginx/nginx.conf
 
-# Copy supervisor configuration
-COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+# Copy backend requirements and install Python dependencies
+COPY backend/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Run database migrations before starting services
-RUN /venv/bin/alembic upgrade head || true
+# Copy backend code
+COPY backend/ .
 
-# Expose port 80
-EXPOSE 80
+# Copy startup script
+COPY startup.sh /app/startup.sh
+RUN chmod +x /app/startup.sh
 
-# Health check
+# Create non-root user for security
+RUN adduser --disabled-password --gecos '' appuser \
+    && chown -R appuser:appuser /app \
+    && chown -R appuser:appuser /usr/share/nginx/html \
+    && chown -R appuser:appuser /var/log/nginx \
+    && chown -R appuser:appuser /var/lib/nginx \
+    && chown -R appuser:appuser /etc/nginx
+
+USER appuser
+
+# Expose port (Render will set PORT environment variable)
+EXPOSE ${PORT:-5000}
+
+# Health check (Render will use the PORT environment variable)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:80/ || exit 1
+    CMD curl -f http://localhost:$PORT/health || exit 1
 
-# Start supervisord to run both nginx and gunicorn
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"] 
+# Run the startup script
+CMD ["/app/startup.sh"] 

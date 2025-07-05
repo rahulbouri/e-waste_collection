@@ -49,7 +49,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY backend/ .
 
 # Ensure alembic.ini is in the correct location for migrations
-RUN cp /app/alembic.ini /app/migrations/alembic.ini 2>/dev/null || true
+RUN cp /app/alembic.ini /app/migrations/alembic.ini 2>/dev/null || true && \
+    cp /app/alembic.ini /app/migrations/ 2>/dev/null || true
 
 # Copy startup script
 COPY startup.sh /app/startup.sh

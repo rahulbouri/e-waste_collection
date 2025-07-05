@@ -51,6 +51,7 @@ def create_app():
     app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_DEFAULT_SENDER')
     
     # Redis configuration
+    app.config['REDIS_URL'] = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
     app.config['REDIS_HOST'] = os.getenv('REDIS_HOST', 'localhost')
     app.config['REDIS_PORT'] = int(os.getenv('REDIS_PORT', 6379))
     app.config['REDIS_PASSWORD'] = os.getenv('REDIS_PASSWORD')

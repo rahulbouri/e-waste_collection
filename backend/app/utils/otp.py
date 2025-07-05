@@ -12,15 +12,25 @@ logger = logging.getLogger(__name__)
 def get_redis_client():
     """Get Redis client within Flask app context"""
     try:
-        redis_client = redis.Redis(
-            host=current_app.config.get('REDIS_HOST', 'localhost'),
-            port=current_app.config.get('REDIS_PORT', 6379),
-            password=current_app.config.get('REDIS_PASSWORD'),
-            db=current_app.config.get('REDIS_DB', 0),
-            decode_responses=True,
-            socket_connect_timeout=5,
-            socket_timeout=5
-        )
+        # Use REDIS_URL if available, otherwise fall back to individual parameters
+        redis_url = current_app.config.get('REDIS_URL')
+        if redis_url:
+            redis_client = redis.from_url(
+                redis_url,
+                decode_responses=True,
+                socket_connect_timeout=5,
+                socket_timeout=5
+            )
+        else:
+            redis_client = redis.Redis(
+                host=current_app.config.get('REDIS_HOST', 'localhost'),
+                port=current_app.config.get('REDIS_PORT', 6379),
+                password=current_app.config.get('REDIS_PASSWORD'),
+                db=current_app.config.get('REDIS_DB', 0),
+                decode_responses=True,
+                socket_connect_timeout=5,
+                socket_timeout=5
+            )
         # Test connection
         redis_client.ping()
         return redis_client

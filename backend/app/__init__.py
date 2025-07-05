@@ -111,6 +111,35 @@ def create_app():
         logger.debug("Health check endpoint called")
         return {'status': 'healthy', 'message': 'Waste Collection API is running'}
     
+    # Serve static files (frontend)
+    @app.route('/', defaults={'path': ''})
+    @app.route('/<path:path>')
+    def serve_frontend(path):
+        # Don't serve API routes as static files
+        if path.startswith('api/'):
+            return {'error': 'Not found'}, 404
+        
+        # Serve static files from /app/static
+        import os
+        static_dir = '/app/static'
+        
+        # If path is empty, serve index.html
+        if not path:
+            path = 'index.html'
+        
+        # Check if file exists
+        file_path = os.path.join(static_dir, path)
+        if os.path.exists(file_path) and os.path.isfile(file_path):
+            from flask import send_from_directory
+            return send_from_directory(static_dir, path)
+        
+        # For SPA routing, serve index.html for all non-API routes
+        if os.path.exists(os.path.join(static_dir, 'index.html')):
+            from flask import send_from_directory
+            return send_from_directory(static_dir, 'index.html')
+        
+        return {'error': 'Not found'}, 404
+    
     # Error handlers
     @app.errorhandler(404)
     def not_found(error):

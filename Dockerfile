@@ -34,16 +34,12 @@ RUN apt-get update \
         g++ \
         libpq-dev \
         curl \
-        nginx \
         postgresql-client \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy built frontend from frontend-builder
-COPY --from=frontend-builder /app/dist /usr/share/nginx/html
-
-# Copy nginx configuration
-COPY nginx.conf /etc/nginx/nginx.conf
+COPY --from=frontend-builder /app/dist /app/static
 
 # Copy backend requirements and install Python dependencies
 COPY backend/requirements.txt .
@@ -61,11 +57,7 @@ RUN chmod +x /app/startup.sh
 
 # Create non-root user for security
 RUN adduser --disabled-password --gecos '' appuser \
-    && chown -R appuser:appuser /app \
-    && chown -R appuser:appuser /usr/share/nginx/html \
-    && chown -R appuser:appuser /var/log/nginx \
-    && chown -R appuser:appuser /var/lib/nginx \
-    && chown -R appuser:appuser /etc/nginx
+    && chown -R appuser:appuser /app
 
 USER appuser
 

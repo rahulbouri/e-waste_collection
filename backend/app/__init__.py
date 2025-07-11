@@ -61,6 +61,11 @@ def create_app():
     app.config['OTP_TTL_SECONDS'] = int(os.getenv('OTP_TTL_SECONDS', 300))
     app.config['OTP_LENGTH'] = int(os.getenv('OTP_LENGTH', 6))
     
+    # OAuth configuration
+    app.config['GOOGLE_CLIENT_ID'] = os.getenv('GOOGLE_CLIENT_ID')
+    app.config['GOOGLE_CLIENT_SECRET'] = os.getenv('GOOGLE_CLIENT_SECRET')
+    app.config['GOOGLE_REDIRECT_URI'] = os.getenv('GOOGLE_REDIRECT_URI')
+    
     logger.info(f"Database URI: {app.config['SQLALCHEMY_DATABASE_URI']}")
     logger.info(f"Redis URL: {os.getenv('REDIS_URL', 'redis://localhost:6379/0')}")
     logger.info(f"Mail server: {app.config['MAIL_SERVER']}:{app.config['MAIL_PORT']}")
@@ -95,13 +100,17 @@ def create_app():
     
     # Register blueprints
     logger.info("Registering blueprints...")
-    from .routes.auth import auth_bp
+    from .routes.auth import auth_bp, init_oauth
     from .routes.bookings import bookings_bp
     from .routes.users import users_bp
     
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(bookings_bp, url_prefix='/api/bookings')
     app.register_blueprint(users_bp, url_prefix='/api/users')
+    
+    # Initialize OAuth
+    logger.info("Initializing OAuth...")
+    init_oauth(app)
     
     logger.info("All blueprints registered successfully")
     

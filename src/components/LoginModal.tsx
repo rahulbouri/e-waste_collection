@@ -8,6 +8,7 @@ import { Mail, User, MapPin, Phone } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiClient } from '@/lib/api';
 import { cn } from '@/lib/utils';
+import GoogleLoginButton from './GoogleLoginButton';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -128,6 +129,15 @@ const LoginModal = ({ isOpen, onClose, onNewUser }: LoginModalProps) => {
     }
   };
 
+  const handleGoogleLoginSuccess = () => {
+    // Google OAuth success will be handled by the redirect flow
+    onClose?.();
+  };
+
+  const handleGoogleLoginError = (error: string) => {
+    setError(error);
+  };
+
   const handleClose = () => {
     onClose();
   };
@@ -157,7 +167,28 @@ const LoginModal = ({ isOpen, onClose, onNewUser }: LoginModalProps) => {
                 <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Mail className="w-8 h-8 text-primary" />
                 </div>
-                <p className="text-gray-600">Enter your email address to continue</p>
+                <p className="text-gray-600">Choose your login method</p>
+              </div>
+              
+              {/* Google OAuth Button */}
+              <div className="space-y-4">
+                <GoogleLoginButton
+                  onSuccess={handleGoogleLoginSuccess}
+                  onError={handleGoogleLoginError}
+                  disabled={loading}
+                />
+                
+                {/* Divider */}
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-background px-2 text-muted-foreground">
+                      Or continue with email
+                    </span>
+                  </div>
+                </div>
               </div>
               
               <div className="space-y-2">

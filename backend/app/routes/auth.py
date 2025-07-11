@@ -1,14 +1,19 @@
-from flask import Blueprint, request, jsonify, session
+from flask import Blueprint, request, jsonify, session, redirect, url_for
 from datetime import datetime
 import re
 from ..models import User, db
 from ..utils.otp import generate_otp, store_otp, verify_otp, cleanup_expired_otps
 from ..utils.emailer import send_otp_email_html
 import logging
-
+import os
+from authlib.integrations.flask_client import OAuth
+from urllib.parse import urlencode
 
 auth_bp = Blueprint('auth', __name__)
 logger = logging.getLogger(__name__)
+
+# Initialize OAuth
+oauth = OAuth()
 
 def is_valid_email(email):
     """Validate email format"""
@@ -22,6 +27,19 @@ def is_valid_bangalore_pincode(pincode):
 def is_valid_indian_phone(phone):
     """Validate Indian phone number format"""
     return re.match(r'^\d{10}$', phone) is not None
+
+def init_oauth(app):
+    """Initialize OAuth with Flask app"""
+    oauth.init_app(app)
+    
+    # Configure Google OAuth using OpenID Connect discovery
+    oauth.register(
+        name='google',
+        client_id=os.getenv('GOOGLE_CLIENT_ID'),
+        client_secret=os.getenv('GOOGLE_CLIENT_SECRET'),
+        server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
+        client_kwargs={'scope': 'openid email profile'},
+    )
 
 @auth_bp.route('/send-otp', methods=['POST'])
 def send_otp():
@@ -215,16 +233,16 @@ def logout():
 @auth_bp.route('/me', methods=['GET'])
 def get_current_user():
     """Get current user information"""
-    logger.debug("Current user request received")
+    logger.debug(f"Current user request received. Session: {dict(session)}")
     
     if 'user_id' not in session:
-        logger.warning("Current user request without active session")
+        logger.warning("Current user request without active session. Session: %s", dict(session))
         return jsonify({'error': 'Not authenticated'}), 401
     
     try:
         user = User.query.get(session['user_id'])
         if not user:
-            logger.warning(f"User {session['user_id']} not found in database")
+            logger.warning(f"User {session['user_id']} not found in database. Session: {dict(session)}")
             session.clear()
             return jsonify({'error': 'User not found'}), 404
         
@@ -256,12 +274,101 @@ def get_current_user():
             user_data['city'] = ''
             user_data['state'] = ''
         
-        logger.debug(f"Returning user info for user {user.id}")
+        logger.info(f"Returning user info for user {user.id}: {user_data}. Session: {dict(session)}")
         return jsonify(user_data), 200
         
     except Exception as e:
-        logger.error(f"Error getting current user: {e}")
+        logger.error(f"Error getting current user: {e}. Session: {dict(session)}")
         return jsonify({'error': 'Internal server error'}), 500
+
+@auth_bp.route('/google/login')
+def google_login():
+    """Initiate Google OAuth login"""
+    try:
+        # Get the redirect URI from environment or construct it
+        redirect_uri = os.getenv('GOOGLE_REDIRECT_URI')
+        if not redirect_uri:
+            # Fallback: construct from request
+            base_url = request.host_url.rstrip('/')
+            redirect_uri = f"{base_url}/api/auth/google/callback"
+        
+        # Store the intended redirect in session
+        session['oauth_redirect'] = request.args.get('redirect', '/')
+        
+        return oauth.google.authorize_redirect(redirect_uri)
+    except Exception as e:
+        logger.error(f"Error initiating Google OAuth: {e}")
+        return jsonify({'error': 'Failed to initiate Google login'}), 500
+
+@auth_bp.route('/google/callback')
+def google_callback():
+    """Handle Google OAuth callback"""
+    try:
+        logger.info(f"Google OAuth callback received. Session before: {dict(session)}")
+        # Get the token
+        token = oauth.google.authorize_access_token()
+        logger.debug(f"Google OAuth token received: {{'access_token': '{token.get('access_token', '')[:6]}...', 'expires_in': {token.get('expires_in')}}}")
+        
+        # Get user info from Google using OpenID Connect
+        user_info = oauth.google.userinfo(token=token)
+        logger.info(f"Google user info: {{'sub': '{user_info.get('sub')}', 'email': '{user_info.get('email')}', 'name': '{user_info.get('name')}', 'picture': '{user_info.get('picture')}'}}")
+        
+        # Extract user data
+        google_id = user_info.get('sub')  # Google's unique user ID
+        email = user_info.get('email')
+        name = user_info.get('name', email.split('@')[0])
+        profile_picture = user_info.get('picture')
+        
+        if not email:
+            logger.error("No email provided by Google OAuth. User info: %s", user_info)
+            return jsonify({'error': 'Email is required for registration'}), 400
+        
+        # Check if user exists by email or google_id
+        user = User.query.filter(
+            (User.email == email) | (User.google_id == google_id)
+        ).first()
+        
+        if user:
+            # Update existing user with Google info if needed
+            if not user.google_id:
+                user.google_id = google_id
+                user.oauth_provider = 'google'
+                user.profile_picture = profile_picture
+                db.session.commit()
+                logger.info(f"Updated existing user {user.id} with Google OAuth info")
+        else:
+            # Create new user
+            user = User(
+                email=email,
+                name=name,
+                phone='',  # Empty phone for OAuth users
+                google_id=google_id,
+                oauth_provider='google',
+                profile_picture=profile_picture
+            )
+            db.session.add(user)
+            db.session.commit()
+            logger.info(f"Created new user {user.id} via Google OAuth")
+        
+        # Log user in
+        session['user_id'] = user.id
+        session['email'] = user.email
+        logger.info(f"User {user.id} logged in via Google OAuth. Session after: {dict(session)}")
+        
+        # Update last login
+        user.last_login_at = datetime.utcnow()
+        db.session.commit()
+        
+        # Redirect to frontend
+        redirect_url = session.pop('oauth_redirect', '/')
+        # Redirect to frontend's OAuth callback route so it can handle the auth state
+        frontend_callback_url = f"http://localhost:5173/auth/callback?redirect={redirect_url}"
+        logger.info(f"Redirecting user {user.id} to frontend callback: {frontend_callback_url}")
+        return redirect(frontend_callback_url)
+        
+    except Exception as e:
+        logger.error(f"Error in Google OAuth callback: {e}. Session: {dict(session)}")
+        return jsonify({'error': 'Failed to complete Google login'}), 500
 
 # Cleanup expired OTPs before each request
 @auth_bp.before_request

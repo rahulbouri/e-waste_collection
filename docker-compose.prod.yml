@@ -40,20 +40,12 @@ services:
       context: ./backend
       dockerfile: Dockerfile.prod
     container_name: eco_collect_backend_prod
+    env_file:
+      - .env
     environment:
       - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-waste_collection}
       - REDIS_URL=redis://redis:6379/0
       - REDIS_HOST=redis
-      - SECRET_KEY=${SECRET_KEY}
-      - MAIL_SERVER=${MAIL_SERVER:-smtp.gmail.com}
-      - MAIL_PORT=${MAIL_PORT:-465}
-      - MAIL_USE_TLS=${MAIL_USE_TLS:-false}
-      - MAIL_USE_SSL=${MAIL_USE_SSL:-true}
-      - MAIL_USERNAME=${MAIL_USERNAME}
-      - MAIL_PASSWORD=${MAIL_PASSWORD}
-      - MAIL_DEFAULT_SENDER=${MAIL_DEFAULT_SENDER}
-      - OTP_EXPIRY=${OTP_EXPIRY:-300}
-      - OTP_LENGTH=${OTP_LENGTH:-6}
       - FLASK_ENV=production
     ports:
       - "8000:5000"

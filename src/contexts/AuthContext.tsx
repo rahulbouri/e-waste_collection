@@ -10,6 +10,8 @@ interface User {
   pincode: string;
   city: string;
   state: string;
+  oauth_provider?: string;
+  profile_picture?: string;
 }
 
 interface AuthContextType {
@@ -20,6 +22,7 @@ interface AuthContextType {
   logout: () => void;
   updateUser: (userData: Partial<User>) => void;
   checkAuth: () => Promise<void>;
+  handleOAuthRedirect: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -54,7 +57,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           address: backendUser.address || '',
           pincode: backendUser.pincode || '',
           city: backendUser.city || '',
-          state: backendUser.state || ''
+          state: backendUser.state || '',
+          oauth_provider: backendUser.oauth_provider || 'email',
+          profile_picture: backendUser.profile_picture || ''
         };
         setUser(userData);
         localStorage.setItem('user', JSON.stringify(userData));
@@ -73,6 +78,36 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       return false;
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleOAuthRedirect = async () => {
+    console.log('AuthContext: handleOAuthRedirect called');
+    // Check if we're returning from OAuth flow
+    const urlParams = new URLSearchParams(window.location.search);
+    const oauthRedirect = localStorage.getItem('oauth_redirect');
+    
+    console.log('AuthContext: oauthRedirect from localStorage:', oauthRedirect);
+    
+    if (oauthRedirect) {
+      // Clear the stored redirect
+      localStorage.removeItem('oauth_redirect');
+      console.log('AuthContext: Cleared oauth_redirect from localStorage');
+      
+      // Check if user is now authenticated
+      console.log('AuthContext: Checking authentication with backend...');
+      const isValid = await checkAuth();
+      console.log('AuthContext: Authentication check result:', isValid);
+      
+      if (isValid) {
+        // Redirect to the intended page
+        console.log('AuthContext: Authentication valid, updating history to:', oauthRedirect);
+        window.history.replaceState({}, document.title, oauthRedirect);
+      } else {
+        console.error('AuthContext: Authentication check failed');
+      }
+    } else {
+      console.log('AuthContext: No oauth_redirect found in localStorage');
     }
   };
 
@@ -120,6 +155,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       }
       // Then verify with backend
       await checkAuth();
+      
+      // Handle OAuth redirect if needed
+      await handleOAuthRedirect();
     };
     
     initializeAuth();
@@ -133,6 +171,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     logout,
     updateUser,
     checkAuth,
+    handleOAuthRedirect,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

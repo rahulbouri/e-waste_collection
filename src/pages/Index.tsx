@@ -69,9 +69,9 @@ const Index = () => {
   const renderContent = () => {
     switch (activeSection) {
       case 'ewaste':
-        return <EWasteBooking onBack={() => setActiveSection('home')} />;
+        return <EWasteBooking onBack={() => setActiveSection('home')} onAccountDetails={() => setActiveSection('account-details')} />;
       case 'biomedical':
-        return <BiomedicalBooking onBack={() => setActiveSection('home')} />;
+        return <BiomedicalBooking onBack={() => setActiveSection('home')} onAccountDetails={() => setActiveSection('account-details')} />;
       case 'account-details':
         return <AccountDetailsPage onBack={() => setActiveSection('home')} />;
       case 'pickups':

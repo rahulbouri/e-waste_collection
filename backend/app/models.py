@@ -13,6 +13,11 @@ class User(db.Model):
     last_login_at = db.Column(db.DateTime)
     is_active = db.Column(db.Boolean, default=True)
     
+    # OAuth fields
+    google_id = db.Column(db.String(100), unique=True, nullable=True, index=True)
+    oauth_provider = db.Column(db.String(20), nullable=True, default='email')  # 'email' or 'google'
+    profile_picture = db.Column(db.String(500), nullable=True)
+    
     # Relationships
     addresses = db.relationship('Address', back_populates='user', cascade='all, delete-orphan')
     bookings = db.relationship('Booking', back_populates='user', cascade='all, delete-orphan')
@@ -24,7 +29,9 @@ class User(db.Model):
             'name': self.name,
             'phone': self.phone,
             'created_at': self.created_at.isoformat() if self.created_at else None,
-            'last_login_at': self.last_login_at.isoformat() if self.last_login_at else None
+            'last_login_at': self.last_login_at.isoformat() if self.last_login_at else None,
+            'oauth_provider': self.oauth_provider,
+            'profile_picture': self.profile_picture
         }
 
 class Address(db.Model):

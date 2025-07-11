@@ -21,6 +21,7 @@ function getApiBaseUrl(): string {
 }
 
 const API_BASE_URL = getApiBaseUrl();
+export { API_BASE_URL };
 
 interface ApiResponse<T = any> {
   data?: T;
@@ -83,6 +84,17 @@ class ApiClient {
     });
   }
 
+  // Google OAuth endpoints
+  async initiateGoogleLogin(redirectUrl?: string): Promise<void> {
+    const redirect = redirectUrl || window.location.pathname;
+    const loginUrl = `${this.baseURL}/auth/google/login?redirect=${encodeURIComponent(redirect)}`;
+    window.location.href = loginUrl;
+  }
+
+  async getGoogleLoginStatus(): Promise<ApiResponse<{ isAuthenticated: boolean; user?: any }>> {
+    return this.request('/auth/me');
+  }
+
   async register(email: string, userData: {
     name: string;
     phone: string;
@@ -111,6 +123,8 @@ class ApiClient {
     pincode: string;
     city: string;
     state: string;
+    oauth_provider?: string;
+    profile_picture?: string;
   }>> {
     return this.request('/auth/me');
   }
@@ -267,6 +281,8 @@ export interface User {
   state: string;
   created_at: string;
   last_login_at?: string;
+  oauth_provider?: string;
+  profile_picture?: string;
 }
 
 export interface Address {

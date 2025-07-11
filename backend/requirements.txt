@@ -12,4 +12,8 @@ email-validator==2.1.0
 gunicorn==21.2.0
 alembic==1.13.1
 Pillow==10.1.0
-python-multipart==0.0.6 
+python-multipart==0.0.6
+
+# OAuth Dependencies
+authlib==1.2.1
+requests==2.31.0 

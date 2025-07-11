@@ -361,8 +361,8 @@ def google_callback():
         
         # Redirect to frontend
         redirect_url = session.pop('oauth_redirect', '/')
-        # Redirect to frontend's OAuth callback route so it can handle the auth state
-        frontend_callback_url = f"http://localhost:5173/auth/callback?redirect={redirect_url}"
+        frontend_base_url = os.getenv('FRONTEND_BASE_URL', 'http://localhost:5173')
+        frontend_callback_url = f"{frontend_base_url}/auth/callback?redirect={redirect_url}"
         logger.info(f"Redirecting user {user.id} to frontend callback: {frontend_callback_url}")
         return redirect(frontend_callback_url)
         

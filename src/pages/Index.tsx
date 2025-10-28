@@ -8,7 +8,6 @@ import EWasteBooking from '@/components/EWasteBooking';
 import BiomedicalBooking from '@/components/BiomedicalBooking';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import TrustedPartners from '@/components/TrustedPartners';
 import LoginModal from '@/components/LoginModal';
 import AccountDetailsPage from '@/pages/AccountDetailsPage';
 import PickupsPage from '@/pages/PickupsPage';
@@ -437,8 +436,6 @@ const HomeSection = ({
               </div>
             </div>
           </div>
-
-          <TrustedPartners />
         </div>
       </div>
     </div>

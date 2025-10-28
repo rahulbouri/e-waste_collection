@@ -35,9 +35,7 @@ const Footer = () => {
           <div>
             <h4 className="font-semibold mb-4">Contact</h4>
             <ul className="space-y-2 text-gray-400">
-              <li>Bangalore, Karnataka</li>
-              <li>support@ecocollect.in</li>
-              <li>+91 9876543210</li>
+              <li>ecocollectaid@gmail.com</li>
             </ul>
           </div>
         </div>
